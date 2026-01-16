@@ -6,7 +6,7 @@
     <title>Pro Business Card Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <style>
-        :root { --primary: #4a90e2; --secondary: #2ecc71; }
+        :root { --primary: #4a90e2; --secondary: #2ecc71; --share: #9b59b6; }
         
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -58,6 +58,7 @@
         
         .btn-download { background: var(--primary); }
         .btn-qr { background: var(--secondary); }
+        .btn-share { background: var(--share); width: 100%; flex: 1 1 100%; }
         .btn-reset { background: #e74c3c; width: 100%; flex: 1 1 100%; margin-top: 10px; }
         
         #preview { 
@@ -71,7 +72,6 @@
             text-align: left; 
             position: relative; 
             min-height: 150px;
-            transition: background-color 0.3s ease;
         }
         
         #preview h3 { margin: 0; font-size: 22px; min-height: 28px; }
@@ -86,7 +86,6 @@
         }
         
         .color-picker-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-        #vcard-url-box { margin-top:15px; background: #f1f2f6; padding: 15px; border-radius: 10px; border: 1px dashed #adb5bd; text-align: left; }
     </style>
 </head>
 <body>
@@ -111,11 +110,6 @@
         <input type="text" id="company" placeholder="Εταιρεία" oninput="liveUpdate()" style="width: 48%; display: inline-block;">
         <input type="text" id="job" placeholder="Θέση" oninput="liveUpdate()" style="width: 48%; display: inline-block; float: right;">
     </div>
-    <div class="input-group">
-        <label>Links (LinkedIn / Website)</label>
-        <input type="text" id="linkedin" placeholder="LinkedIn URL" oninput="liveUpdate()" style="margin-bottom: 5px;">
-        <input type="text" id="website" placeholder="Website URL" oninput="liveUpdate()">
-    </div>
 
     <div class="color-picker-wrapper">
         <label>Χρώμα Κάρτας:</label>
@@ -127,28 +121,20 @@
         <p id="job-preview" style="font-weight: bold;"></p>
         <p id="phone-preview"></p>
         <p id="email-preview"></p>
-        <div style="text-align: center;">
-            <div id="qr-canvas"></div>
-        </div>
+        <div style="text-align: center;"><div id="qr-canvas"></div></div>
     </div>
 
     <div class="controls">
+        <button onclick="shareVCard()" class="btn-share">🔗 Share Contact (WhatsApp/Viber/etc)</button>
         <button onclick="downloadVCard()" class="btn-download">Download vCard</button>
         <button onclick="downloadQR()" class="btn-qr">Download QR</button>
-        <button onclick="generateVCardURL()" style="background: #9b59b6; width: 100%;">Get NFC Link</button>
         <button onclick="resetForm()" class="btn-reset">Καθαρισμός</button>
-    </div>
-
-    <div id="vcard-url-box" style="display:none;">
-        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;"><b>NFC Public URL:</b></p>
-        <input type="text" id="vcard-url" readonly style="font-size: 12px; background: #fff; width: 100%; border: 1px solid #ccc; margin-bottom: 5px;">
-        <button onclick="copyURL()" style="width: 100%; background: #7f8c8d; height: 35px; padding: 5px;">Copy Link</button>
     </div>
 </div>
 
 <script>
 window.onload = () => {
-    const fields = ['name', 'phone', 'email', 'company', 'job', 'linkedin', 'website', 'cardColor'];
+    const fields = ['name', 'phone', 'email', 'company', 'job', 'cardColor'];
     fields.forEach(field => {
         const saved = localStorage.getItem(field);
         if(saved) document.getElementById(field).value = saved;
@@ -166,8 +152,6 @@ function constructVCard(data) {
         `TITLE:${data.job}`,
         `TEL;TYPE=CELL:${data.phone}`,
         `EMAIL;TYPE=INTERNET:${data.email}`,
-        `URL:${data.linkedin}`,
-        `URL:${data.website}`,
         'END:VCARD'
     ].join('\n');
 }
@@ -179,8 +163,6 @@ function liveUpdate() {
         email: document.getElementById('email').value,
         company: document.getElementById('company').value,
         job: document.getElementById('job').value,
-        linkedin: document.getElementById('linkedin').value,
-        website: document.getElementById('website').value,
         color: document.getElementById('cardColor').value
     };
 
@@ -200,68 +182,67 @@ function liveUpdate() {
     const qrContainer = document.getElementById("qr-canvas");
     qrContainer.innerHTML = "";
     if(data.name !== "") {
-        const vCardString = constructVCard(data);
-        new QRCode(qrContainer, { 
-            text: vCardString, 
-            width: 120, 
-            height: 120, 
-            correctLevel: QRCode.CorrectLevel.M 
-        });
+        new QRCode(qrContainer, { text: constructVCard(data), width: 120, height: 120 });
+    }
+}
+
+async function shareVCard() {
+    const name = document.getElementById('name').value.trim();
+    if(!name) return alert("Συμπληρώστε το όνομα!");
+
+    const vcard = constructVCard({
+        name: name,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        company: document.getElementById('company').value,
+        job: document.getElementById('job').value
+    });
+
+    const file = new File([vcard], `${name}.vcf`, { type: 'text/vcard' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                files: [file],
+                title: 'Επαγγελματική Κάρτα',
+                text: `Στοιχεία επικοινωνίας για ${name}`
+            });
+        } catch (err) {
+            console.error('Share failed:', err);
+        }
+    } else {
+        alert("Η κοινοποίηση αρχείων δεν υποστηρίζεται από αυτόν τον browser. Χρησιμοποιήστε το Download.");
     }
 }
 
 function downloadVCard() {
     const name = document.getElementById('name').value.trim();
-    if(!name) return alert("Παρακαλώ συμπληρώστε το όνομα.");
-    
-    const data = {
+    if(!name) return alert("Συμπληρώστε το όνομα.");
+    const vcard = constructVCard({
         name: name,
-        phone: document.getElementById('phone').value.trim(),
-        email: document.getElementById('email').value.trim(),
-        company: document.getElementById('company').value.trim(),
-        job: document.getElementById('job').value.trim(),
-        linkedin: document.getElementById('linkedin').value.trim(),
-        website: document.getElementById('website').value.trim()
-    };
-    
-    const vCardString = constructVCard(data);
-    const blob = new Blob([vCardString], { type: "text/vcard;charset=utf-8" });
-    const url = window.URL.createObjectURL(blob);
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        company: document.getElementById('company').value,
+        job: document.getElementById('job').value
+    });
+    const blob = new Blob([vcard], { type: "text/vcard" });
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `${name.replace(/\s+/g, '_')}.vcf`;
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name}.vcf`;
     a.click();
-}
-
-function generateVCardURL() {
-    const name = document.getElementById('name').value.trim();
-    if (!name) return alert("Βάλε ένα όνομα!");
-    const baseURL = "https://christinastavrou684-a11y.github.io/Business-Card/cards/"; 
-    document.getElementById("vcard-url").value = baseURL + name.replace(/\s+/g, "_") + ".vcf";
-    document.getElementById("vcard-url-box").style.display = "block";
-}
-
-function copyURL() {
-    const copyText = document.getElementById("vcard-url");
-    copyText.select();
-    navigator.clipboard.writeText(copyText.value);
-    alert("Αντιγράφηκε!");
 }
 
 function downloadQR() {
     const canvas = document.querySelector("#qr-canvas canvas");
-    if (!canvas) return alert("Πληκτρολογήστε ένα όνομα για να δημιουργηθεί το QR!");
+    if (!canvas) return alert("Πληκτρολογήστε όνομα!");
     const a = document.createElement("a");
     a.href = canvas.toDataURL("image/png");
-    a.download = "My_Business_QR.png";
+    a.download = "Business_QR.png";
     a.click();
 }
 
 function resetForm() {
-    if(confirm("Θέλετε να καθαρίσετε όλα τα στοιχεία;")) {
-        localStorage.clear();
-        location.reload();
-    }
+    if(confirm("Καθαρισμός όλων;")) { localStorage.clear(); location.reload(); }
 }
 </script>
 </body>

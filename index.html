@@ -86,6 +86,7 @@
         }
         
         .color-picker-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+        #vcard-url-box { margin-top:15px; background: #f1f2f6; padding: 15px; border-radius: 10px; border: 1px dashed #adb5bd; text-align: left; }
     </style>
 </head>
 <body>
@@ -110,10 +111,15 @@
         <input type="text" id="company" placeholder="Εταιρεία" oninput="liveUpdate()" style="width: 48%; display: inline-block;">
         <input type="text" id="job" placeholder="Θέση" oninput="liveUpdate()" style="width: 48%; display: inline-block; float: right;">
     </div>
+    <div class="input-group">
+        <label>Links (LinkedIn / Website)</label>
+        <input type="text" id="linkedin" placeholder="LinkedIn URL" oninput="liveUpdate()" style="margin-bottom: 5px;">
+        <input type="text" id="website" placeholder="Website URL" oninput="liveUpdate()">
+    </div>
 
     <div class="color-picker-wrapper">
         <label>Χρώμα Κάρτας:</label>
-        <input type="color" id="cardColor" value="#ffffff" oninput="liveUpdate()" style="width: 50px; height: 30px; border-radius: 5px; border: 1px solid #ddd; cursor: pointer; padding: 0;">
+        <input type="color" id="cardColor" value="#ffffff" oninput="liveUpdate()" style="width: 50px; height: 30px; cursor: pointer; padding: 0;">
     </div>
 
     <div id="preview">
@@ -125,16 +131,23 @@
     </div>
 
     <div class="controls">
-        <button onclick="shareVCard()" class="btn-share">🔗 Share Contact (WhatsApp/Viber/etc)</button>
+        <button onclick="handleShare()" class="btn-share">🔗 Share Contact</button>
         <button onclick="downloadVCard()" class="btn-download">Download vCard</button>
         <button onclick="downloadQR()" class="btn-qr">Download QR</button>
+        <button onclick="generateVCardURL()" style="background: #e67e22; width: 100%;">Get NFC Link</button>
         <button onclick="resetForm()" class="btn-reset">Καθαρισμός</button>
+    </div>
+
+    <div id="vcard-url-box" style="display:none;">
+        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;"><b>NFC Public URL:</b></p>
+        <input type="text" id="vcard-url" readonly style="font-size: 12px; background: #fff; width: 100%; border: 1px solid #ccc; margin-bottom: 5px;">
+        <button onclick="copyURL()" style="width: 100%; background: #7f8c8d; height: 35px; padding: 5px;">Copy Link</button>
     </div>
 </div>
 
 <script>
 window.onload = () => {
-    const fields = ['name', 'phone', 'email', 'company', 'job', 'cardColor'];
+    const fields = ['name', 'phone', 'email', 'company', 'job', 'linkedin', 'website', 'cardColor'];
     fields.forEach(field => {
         const saved = localStorage.getItem(field);
         if(saved) document.getElementById(field).value = saved;
@@ -142,18 +155,30 @@ window.onload = () => {
     liveUpdate();
 };
 
-function constructVCard(data) {
-    return [
+function constructVCard() {
+    const name = document.getElementById('name').value.trim() || "Contact";
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const company = document.getElementById('company').value.trim();
+    const job = document.getElementById('job').value.trim();
+    const linkedin = document.getElementById('linkedin').value.trim();
+    const website = document.getElementById('website').value.trim();
+
+    let vcard = [
         'BEGIN:VCARD',
         'VERSION:3.0',
-        `N:${data.name};;;;`,
-        `FN:${data.name}`,
-        `ORG:${data.company}`,
-        `TITLE:${data.job}`,
-        `TEL;TYPE=CELL:${data.phone}`,
-        `EMAIL;TYPE=INTERNET:${data.email}`,
-        'END:VCARD'
-    ].join('\n');
+        `N:${name};;;;`,
+        `FN:${name}`,
+        `ORG:${company}`,
+        `TITLE:${job}`,
+        `TEL;TYPE=CELL:${phone}`,
+        `EMAIL;TYPE=INTERNET:${email}`
+    ];
+    if(linkedin) vcard.push(`URL:${linkedin}`);
+    if(website) vcard.push(`URL:${website}`);
+    vcard.push('END:VCARD');
+    
+    return vcard.join('\n');
 }
 
 function liveUpdate() {
@@ -163,6 +188,8 @@ function liveUpdate() {
         email: document.getElementById('email').value,
         company: document.getElementById('company').value,
         job: document.getElementById('job').value,
+        linkedin: document.getElementById('linkedin').value,
+        website: document.getElementById('website').value,
         color: document.getElementById('cardColor').value
     };
 
@@ -181,24 +208,17 @@ function liveUpdate() {
 
     const qrContainer = document.getElementById("qr-canvas");
     qrContainer.innerHTML = "";
-    if(data.name !== "") {
-        new QRCode(qrContainer, { text: constructVCard(data), width: 120, height: 120 });
+    if(data.name.trim() !== "") {
+        new QRCode(qrContainer, { text: constructVCard(), width: 120, height: 120 });
     }
 }
 
-async function shareVCard() {
+async function handleShare() {
     const name = document.getElementById('name').value.trim();
     if(!name) return alert("Συμπληρώστε το όνομα!");
 
-    const vcard = constructVCard({
-        name: name,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        company: document.getElementById('company').value,
-        job: document.getElementById('job').value
-    });
-
-    const file = new File([vcard], `${name}.vcf`, { type: 'text/vcard' });
+    const vcardText = constructVCard();
+    const file = new File([vcardText], `${name}.vcf`, { type: 'text/vcard' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
@@ -208,28 +228,35 @@ async function shareVCard() {
                 text: `Στοιχεία επικοινωνίας για ${name}`
             });
         } catch (err) {
-            console.error('Share failed:', err);
+            if (err.name !== 'AbortError') console.error('Share failed:', err);
         }
     } else {
-        alert("Η κοινοποίηση αρχείων δεν υποστηρίζεται από αυτόν τον browser. Χρησιμοποιήστε το Download.");
+        downloadVCard();
     }
 }
 
 function downloadVCard() {
-    const name = document.getElementById('name').value.trim();
-    if(!name) return alert("Συμπληρώστε το όνομα.");
-    const vcard = constructVCard({
-        name: name,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        company: document.getElementById('company').value,
-        job: document.getElementById('job').value
-    });
-    const blob = new Blob([vcard], { type: "text/vcard" });
+    const name = document.getElementById('name').value.trim() || "contact";
+    const blob = new Blob([constructVCard()], { type: "text/vcard" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${name}.vcf`;
+    a.download = `${name.replace(/\s+/g, "_")}.vcf`;
     a.click();
+}
+
+function generateVCardURL() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) return alert("Βάλε ένα όνομα!");
+    const baseURL = "https://christinastavrou684-a11y.github.io/Business-Card/cards/"; 
+    document.getElementById("vcard-url").value = baseURL + name.replace(/\s+/g, "_") + ".vcf";
+    document.getElementById("vcard-url-box").style.display = "block";
+}
+
+function copyURL() {
+    const copyText = document.getElementById("vcard-url");
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    alert("Αντιγράφηκε!");
 }
 
 function downloadQR() {

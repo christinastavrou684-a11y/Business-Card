@@ -3,123 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Business Card Generator</title>
+    <title>Business Card</title>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
     <style>
-        :root { --primary: #4a90e2; --secondary: #2ecc71; --share: #9b59b6; }
+        :root { 
+            --gold: #d4af37; 
+            --dark-bg: #1a1a1a;
+            --share: #9b59b6; 
+            --nfc: #e67e22;
+        }
         
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: 'Segoe UI', sans-serif; 
             background: #2c3e50; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0; 
-            padding: 20px;
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; padding: 20px;
         }
 
         .container { 
-            background: #ffffff; 
-            padding: 30px; 
-            border-radius: 20px; 
+            background: #ffffff; padding: 30px; border-radius: 20px; 
             box-shadow: 0 20px 40px rgba(0,0,0,0.4); 
-            width: 100%; 
-            max-width: 450px; 
-            text-align: center; 
+            width: 100%; max-width: 450px; text-align: center; 
         }
 
-        h2 { color: #333; margin-bottom: 20px; }
-        
-        .input-group { margin-bottom: 15px; text-align: left; }
-        label { display: block; font-size: 12px; color: #666; margin-left: 5px; margin-bottom: 2px; }
+        .input-group { margin-bottom: 12px; text-align: left; }
+        label { display: block; font-size: 11px; color: #666; margin-bottom: 2px; font-weight: bold; }
         input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 1px solid #ddd; 
-            border-radius: 10px; 
-            box-sizing: border-box; 
-            font-size: 14px;
-            background: #f8f9fa;
+            width: 100%; padding: 10px; border: 1px solid #ddd; 
+            border-radius: 8px; font-size: 14px; background: #f8f9fa; box-sizing: border-box;
         }
 
-        .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
-        
-        button { 
-            padding: 12px 18px; 
-            border: none; 
-            border-radius: 10px; 
-            color: white; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: 0.3s; 
-            flex: 1 1 45%; 
-        }
-        
-        .btn-download { background: var(--primary); }
-        .btn-qr { background: var(--secondary); }
-        .btn-share { background: var(--share); width: 100%; flex: 1 1 100%; }
-        .btn-reset { background: #e74c3c; width: 100%; flex: 1 1 100%; margin-top: 10px; }
-        
+        /* VIP Gold Preview */
         #preview { 
-            background: white; 
-            color: black; 
-            padding: 25px; 
-            border-radius: 15px; 
-            margin-top: 25px; 
-            border: 1px solid #eee; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            text-align: left; 
-            position: relative; 
-            min-height: 150px;
+            background: var(--dark-bg); 
+            color: var(--gold); 
+            padding: 25px; border-radius: 15px; 
+            margin-top: 25px; border: 2px solid var(--gold); 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: left;
         }
         
-        #preview h3 { margin: 0; font-size: 22px; min-height: 28px; }
-        #preview p { margin: 5px 0; font-size: 14px; color: inherit; opacity: 0.9; min-height: 18px; }
-        
+        #preview h3 { margin: 0; font-size: 24px; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 5px; }
+        #preview p { margin: 8px 0; font-size: 14px; color: #ffffff; opacity: 0.9; }
+
         #qr-canvas { 
-            margin-top: 15px; 
-            display: inline-block; 
-            background: white; 
-            padding: 10px; 
-            border-radius: 8px; 
+            margin-top: 15px; display: inline-block; 
+            background: white; padding: 10px; border-radius: 8px; 
+        }
+
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        button { 
+            padding: 14px; border: none; border-radius: 10px; 
+            color: white; cursor: pointer; font-weight: bold; transition: 0.2s; flex: 1 1 100%; 
+            font-size: 15px;
         }
         
-        .color-picker-wrapper { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-        #vcard-url-box { margin-top:15px; background: #f1f2f6; padding: 15px; border-radius: 10px; border: 1px dashed #adb5bd; text-align: left; }
+        .btn-share { background: var(--share); }
+        .btn-nfc { background: var(--nfc); }
+        .btn-reset { background: #e74c3c; margin-top: 10px; opacity: 0.8; }
+        
+        #vcard-url-box { 
+            margin-top:15px; background: #f1f2f6; padding: 15px; 
+            border-radius: 10px; border: 1px dashed #adb5bd; 
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Business Card Maker</h2>
+    <h2 style="color:#333; margin-top:0;">Business Card</h2>
     
     <div class="input-group">
         <label>Ονοματεπώνυμο</label>
         <input type="text" id="name" placeholder="Το Όνομά σας" oninput="liveUpdate()">
     </div>
     <div class="input-group">
-        <label>Τηλέφωνο</label>
-        <input type="text" id="phone" placeholder="+30 690 0000000" oninput="liveUpdate()">
-    </div>
-    <div class="input-group">
-        <label>Email</label>
-        <input type="email" id="email" placeholder="name@company.com" oninput="liveUpdate()">
+        <label>Τηλέφωνο & Email</label>
+        <input type="text" id="phone" placeholder="+30 69..." oninput="liveUpdate()" style="width:48%">
+        <input type="email" id="email" placeholder="Email" oninput="liveUpdate()" style="width:48%; float:right;">
     </div>
     <div class="input-group">
         <label>Εταιρεία & Θέση</label>
-        <input type="text" id="company" placeholder="Εταιρεία" oninput="liveUpdate()" style="width: 48%; display: inline-block;">
-        <input type="text" id="job" placeholder="Θέση" oninput="liveUpdate()" style="width: 48%; display: inline-block; float: right;">
+        <input type="text" id="company" placeholder="Εταιρεία" oninput="liveUpdate()" style="width:48%">
+        <input type="text" id="job" placeholder="Θέση" oninput="liveUpdate()" style="width:48%; float:right;">
     </div>
     <div class="input-group">
-        <label>Links (LinkedIn / Website)</label>
+        <label>Links</label>
         <input type="text" id="linkedin" placeholder="LinkedIn URL" oninput="liveUpdate()" style="margin-bottom: 5px;">
         <input type="text" id="website" placeholder="Website URL" oninput="liveUpdate()">
-    </div>
-
-    <div class="color-picker-wrapper">
-        <label>Χρώμα Κάρτας:</label>
-        <input type="color" id="cardColor" value="#ffffff" oninput="liveUpdate()" style="width: 50px; height: 30px; cursor: pointer; padding: 0;">
     </div>
 
     <div id="preview">
@@ -131,26 +102,23 @@
     </div>
 
     <div class="controls">
-        <button onclick="handleShare()" class="btn-share">🔗 Share Contact</button>
-        <button onclick="downloadVCard()" class="btn-download">Download vCard</button>
-        <button onclick="downloadQR()" class="btn-qr">Download QR</button>
-        <button onclick="generateVCardURL()" style="background: #e67e22; width: 100%;">Get NFC Link</button>
-        <button onclick="resetForm()" class="btn-reset">Καθαρισμός</button>
+        <button onclick="handleShare()" class="btn-share"> Share Contact </button>
+        <button onclick="generateVCardURL()" class="btn-nfc"> Get NFC Link</button>
+        <button onclick="resetForm()" class="btn-reset">Καθαρισμός Όλων</button>
     </div>
 
     <div id="vcard-url-box" style="display:none;">
-        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;"><b>NFC Public URL:</b></p>
-        <input type="text" id="vcard-url" readonly style="font-size: 12px; background: #fff; width: 100%; border: 1px solid #ccc; margin-bottom: 5px;">
-        <button onclick="copyURL()" style="width: 100%; background: #7f8c8d; height: 35px; padding: 5px;">Copy Link</button>
+        <p style="font-size: 12px; margin-bottom: 5px; color: #444;">NFC Public Link:</p>
+        <input type="text" id="vcard-url" readonly style="width:100%; margin-bottom:10px; padding:8px; border:1px solid #ccc; font-size: 12px;">
+        <button onclick="copyURL()" style="background:#7f8c8d; padding: 8px;">Αντιγραφή Link</button>
     </div>
 </div>
 
 <script>
 window.onload = () => {
-    const fields = ['name', 'phone', 'email', 'company', 'job', 'linkedin', 'website', 'cardColor'];
-    fields.forEach(field => {
-        const saved = localStorage.getItem(field);
-        if(saved) document.getElementById(field).value = saved;
+    ['name', 'phone', 'email', 'company', 'job', 'linkedin', 'website'].forEach(f => {
+        const saved = localStorage.getItem(f);
+        if(saved) document.getElementById(f).value = saved;
     });
     liveUpdate();
 };
@@ -164,59 +132,34 @@ function constructVCard() {
     const linkedin = document.getElementById('linkedin').value.trim();
     const website = document.getElementById('website').value.trim();
 
-    let vcard = [
-        'BEGIN:VCARD',
-        'VERSION:3.0',
-        `N:${name};;;;`,
-        `FN:${name}`,
-        `ORG:${company}`,
-        `TITLE:${job}`,
-        `TEL;TYPE=CELL:${phone}`,
-        `EMAIL;TYPE=INTERNET:${email}`
-    ];
+    let vcard = [`BEGIN:VCARD`, `VERSION:3.0`, `N:${name};;;;`, `FN:${name}`, `ORG:${company}`, `TITLE:${job}`, `TEL:${phone}`, `EMAIL:${email}`];
     if(linkedin) vcard.push(`URL:${linkedin}`);
     if(website) vcard.push(`URL:${website}`);
-    vcard.push('END:VCARD');
-    
+    vcard.push(`END:VCARD`);
     return vcard.join('\n');
 }
 
 function liveUpdate() {
-    const data = {
-        name: document.getElementById('name').value || "", 
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        company: document.getElementById('company').value,
-        job: document.getElementById('job').value,
-        linkedin: document.getElementById('linkedin').value,
-        website: document.getElementById('website').value,
-        color: document.getElementById('cardColor').value
-    };
+    const fields = ['name', 'phone', 'email', 'company', 'job', 'linkedin', 'website'];
+    fields.forEach(f => localStorage.setItem(f, document.getElementById(f).value));
 
-    Object.keys(data).forEach(key => localStorage.setItem(key, data[key]));
-
-    document.getElementById('name-preview').textContent = data.name;
-    document.getElementById('job-preview').textContent = (data.job || data.company) ? `${data.job} @ ${data.company}` : "";
-    document.getElementById('phone-preview').textContent = data.phone ? '📞 ' + data.phone : "";
-    document.getElementById('email-preview').textContent = data.email ? '✉️ ' + data.email : "";
-
-    const preview = document.getElementById('preview');
-    preview.style.backgroundColor = data.color;
-    const rgb = parseInt(data.color.substring(1), 16);
-    const luma = 0.2126 * ((rgb >> 16) & 0xff) + 0.7152 * ((rgb >> 8) & 0xff) + 0.0722 * ((rgb >> 0) & 0xff);
-    preview.style.color = luma < 128 ? 'white' : 'black';
+    document.getElementById('name-preview').textContent = document.getElementById('name').value;
+    document.getElementById('job-preview').textContent = (document.getElementById('job').value || document.getElementById('company').value) ? 
+        `${document.getElementById('job').value} @ ${document.getElementById('company').value}` : "";
+    document.getElementById('phone-preview').textContent = document.getElementById('phone').value ? '📞 ' + document.getElementById('phone').value : "";
+    document.getElementById('email-preview').textContent = document.getElementById('email').value ? '✉️ ' + document.getElementById('email').value : "";
 
     const qrContainer = document.getElementById("qr-canvas");
     qrContainer.innerHTML = "";
-    if(data.name.trim() !== "") {
-        new QRCode(qrContainer, { text: constructVCard(), width: 120, height: 120 });
+    if(document.getElementById('name').value.trim() !== "") {
+        new QRCode(qrContainer, { text: constructVCard(), width: 130, height: 130 });
     }
 }
 
 async function handleShare() {
     const name = document.getElementById('name').value.trim();
-    if(!name) return alert("Συμπληρώστε το όνομα!");
-
+    if(!name) return alert("Παρακαλώ συμπληρώστε το όνομα!");
+    
     const vcardText = constructVCard();
     const file = new File([vcardText], `${name}.vcf`, { type: 'text/vcard' });
 
@@ -224,24 +167,19 @@ async function handleShare() {
         try {
             await navigator.share({
                 files: [file],
-                title: 'Επαγγελματική Κάρτα',
-                text: `Στοιχεία επικοινωνίας για ${name}`
+                title: 'Επαγγελματική Επαφή',
+                text: `Στοιχεία για ${name}`
             });
         } catch (err) {
-            if (err.name !== 'AbortError') console.error('Share failed:', err);
+            if (err.name !== 'AbortError') console.error('Error:', err);
         }
     } else {
-        downloadVCard();
+        const blob = new Blob([vcardText], { type: "text/vcard" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${name}.vcf`;
+        a.click();
     }
-}
-
-function downloadVCard() {
-    const name = document.getElementById('name').value.trim() || "contact";
-    const blob = new Blob([constructVCard()], { type: "text/vcard" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${name.replace(/\s+/g, "_")}.vcf`;
-    a.click();
 }
 
 function generateVCardURL() {
@@ -256,20 +194,14 @@ function copyURL() {
     const copyText = document.getElementById("vcard-url");
     copyText.select();
     navigator.clipboard.writeText(copyText.value);
-    alert("Αντιγράφηκε!");
-}
-
-function downloadQR() {
-    const canvas = document.querySelector("#qr-canvas canvas");
-    if (!canvas) return alert("Πληκτρολογήστε όνομα!");
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = "Business_QR.png";
-    a.click();
+    alert("Το Link αντιγράφηκε!");
 }
 
 function resetForm() {
-    if(confirm("Καθαρισμός όλων;")) { localStorage.clear(); location.reload(); }
+    if(confirm("Θέλετε να καθαρίσετε όλα τα στοιχεία;")) {
+        localStorage.clear();
+        location.reload();
+    }
 }
 </script>
 </body>
